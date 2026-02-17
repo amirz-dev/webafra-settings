@@ -3,7 +3,7 @@
 namespace Webafra\LaraSetting;
 
 use Illuminate\Support\ServiceProvider;
-use Webafra\LaraSetting\Models\Setting as SettingModel;
+use Webafra\LaraSetting\Setting as SettingService;
 
 class LaraSettingServiceProvider extends ServiceProvider
 {
@@ -32,7 +32,7 @@ class LaraSettingServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton('webafra-settings', function ($app) {
-            return new SettingModel();
+            return new SettingService();
         });
     }
 }

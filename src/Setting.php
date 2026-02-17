@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Cache;
 
 class Setting
 {
-    public function set(string $key, mixed $value, bool $is_primary = false): mixed
+    public function set(string $key, $value, bool $is_primary = false)
     {
         Cache::forget('setting_' . $key);
 
@@ -21,14 +21,14 @@ class Setting
         return $value;
     }
 
-    public function get(string $key, mixed $default = null): mixed
+    public function get(string $key, $default = null)
     {
         return Cache::rememberForever('setting_' . $key, function () use ($key, $default) {
             return SettingModel::where('key', $key)->value('value') ?? $default;
         });
     }
 
-    public function getPrimary(mixed $default = null): array|mixed
+    public function getPrimary($default = null)
     {
         return Cache::rememberForever('setting_primary', function () {
             return SettingModel::where('is_primary', true)->pluck('value', 'key')->toArray();
