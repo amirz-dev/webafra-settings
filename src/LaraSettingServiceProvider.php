@@ -8,23 +8,28 @@ class LaraSettingServiceProvider extends ServiceProvider
 {
     /**
      * Bootstrap the application services.
-     *
-     * @return void
      */
-    public function boot()
+    public function boot(): void
     {
         $this->publishes([
-            __DIR__.'/Migration'   =>  base_path('database/migrations')
-        ], 'migrations');
+            __DIR__.'/Database/Migrations/' => database_path('migrations')
+        ], 'webafra-settings-migrations');
+
+        $this->publishes([
+            __DIR__.'/Models/' => app_path('Models/Webafra'),
+        ], 'webafra-settings-models');
+
+        $this->publishes([
+            __DIR__.'/Database/Migrations/' => database_path('migrations'),
+            __DIR__.'/Models/' => app_path('Models/Webafra'),
+        ], 'webafra-settings-all');
     }
 
     /**
      * Register the application services.
-     *
-     * @return void
      */
-    public function register()
+    public function register(): void
     {
-        //
+        // 
     }
 }
