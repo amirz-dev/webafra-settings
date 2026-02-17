@@ -17,6 +17,7 @@ class CreateSettingsTable extends Migration
             $table->id();
             $table->string('key')->unique();
             $table->string('value')->nullable();
+            $table->string('group')->default('custom');
             $table->boolean('is_primary')->default(false);
             $table->timestamps();
         });
