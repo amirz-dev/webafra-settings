@@ -14,16 +14,16 @@ class LaraSettingServiceProvider extends ServiceProvider
     {
         $this->publishes([
             __DIR__ . '/Database/Migrations/create_settings_table.php.stub' => database_path('migrations/' . date('Y_m_d_His') . '_create_settings_table.php')
-        ], 'webafra-settings-migrations');
+        ], 'migrations');
 
         $this->publishes([
             __DIR__ . '/Models/' => app_path('Models/Webafra'),
-        ], 'webafra-settings-models');
+        ], 'models');
 
         $this->publishes([
             __DIR__ . '/Database/Migrations/' => database_path('migrations'),
             __DIR__ . '/Models/' => app_path('Models/Webafra'),
-        ], 'webafra-settings-all');
+        ], 'all');
     }
 
     /**
