@@ -1,17 +1,18 @@
 <?php
+
 namespace Webafra\LaraSetting\Facade;
 
 use Illuminate\Support\Facades\Facade;
 
-class Setting extends Facade {
-
+class Setting extends Facade
+{
     /**
-     * The name of the binding in the IoC container.
+     * Get the registered name of the component in the container.
      *
      * @return string
      */
-    protected static function getFacadeAccessor()
+    protected static function getFacadeAccessor(): string
     {
-        return \Webafra\LaraSetting\Setting::class;
+        return 'webafra-settings';
     }
 }

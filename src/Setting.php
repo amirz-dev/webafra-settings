@@ -2,83 +2,55 @@
 
 namespace Webafra\LaraSetting;
 
-use Webafra\LaraSetting\Model\Setting as SettingModel;
+use Webafra\LaraSetting\Models\Setting as SettingModel;
 use Illuminate\Support\Facades\Cache;
 
 class Setting
 {
-
-    public function set($key, $value, $is_primary = false)
+    public function set(string $key, mixed $value, bool $is_primary = false): mixed
     {
-        if (\Cache::has('setting_' . $key)) {
-            Cache::forget('setting_' . $key);
-        }
+        Cache::forget('setting_' . $key);
 
-        $setting = SettingModel::updateOrCreate([
-            'key' => $key
-        ], [
-            'value' => $value,
-            'is_primary' => $is_primary,
-        ]);
+        SettingModel::updateOrCreate(
+            ['key' => $key],
+            ['value' => $value, 'is_primary' => $is_primary]
+        );
 
         Cache::forever('setting_' . $key, $value);
 
         return $value;
     }
 
-    public function get($key, $default = null)
+    public function get(string $key, mixed $default = null): mixed
     {
-        try {
-            if (Cache::has('setting_' . $key)) {
-                return Cache::get('setting_' . $key);
-            }
-
-            $setting = Cache::rememberForever('setting_' . $key, function () use ($key) {
-                return SettingModel::where('key', $key)->firstOrFail()->value;
-            });
-
-            return $setting;
-
-        } catch (\Exception $e) {
-            return $default;
-        }
+        return Cache::rememberForever('setting_' . $key, function () use ($key, $default) {
+            return SettingModel::where('key', $key)->value('value') ?? $default;
+        });
     }
 
-    public function getPrimary($default = null)
+    public function getPrimary(mixed $default = null): array|mixed
     {
-        try {
-            if (Cache::has('setting_primary')) {
-                return Cache::get('setting_primary');
-            }
-
-            $settings = Cache::rememberForever('setting_primary', function () {
-                return SettingModel::where('is_primary', true )->pluck('value', 'key')->toArray();
-            });
-
-            return $settings;
-
-        } catch (\Exception $e) {
-            return $default;
-        }
+        return Cache::rememberForever('setting_primary', function () {
+            return SettingModel::where('is_primary', true)->pluck('value', 'key')->toArray();
+        }) ?? $default;
     }
 
-    public function store($setting)
+    public function store(array $settings): int
     {
         $i = 0;
-        foreach($setting as $key => $value) {
+        foreach ($settings as $key => $value) {
             $this->set($key, $value);
             $i++;
         }
         return $i;
     }
 
-    public function storePrimary($setting)
+    public function storePrimary(array $settings): int
     {
         $i = 0;
-        foreach($setting as $key => $value) {
-            if (gettype($value) == 'array')
-            {
-                $value = serialize($value);
+        foreach ($settings as $key => $value) {
+            if (is_array($value)) {
+                $value = json_encode($value, JSON_THROW_ON_ERROR);
             }
             $this->set($key, $value, true);
             $i++;
@@ -86,13 +58,11 @@ class Setting
         return $i;
     }
 
-
-    public function clean()
+    public function clean(): void
     {
-        \Artisan::call('cache:clear');
-        // Cache::forget('setting_primary');
+        Cache::forget('setting_primary');
+        foreach (SettingModel::pluck('key') as $key) {
+            Cache::forget('setting_' . $key);
+        }
     }
-
-
-
 }
