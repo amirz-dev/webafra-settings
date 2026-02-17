@@ -1,57 +1,77 @@
-#Laravel Setting
+# Laravel Setting (WebAfra)
 
-install via composer
+A Laravel 12 compatible package to store custom settings in the database and cache, with auto-discovery and publishable migrations & models.
 
-`composer require webafra/larasettings`
+## Installation
 
-Add Service Provider to `config/app.php` providers array:
-```php
-'providers' => [
-    ....
-    Webafra\LaraSetting\LaraSettingServiceProvider::class,
-]
+Install via Composer:
+
+```
+composer require webafra/larasetting
 ```
 
-And add alias to aliases array:
+> **Note:** Since this package supports **Laravel auto-discovery**, you **do not need to manually add the ServiceProvider or Facade**.
+> If you want to override manually, the ServiceProvider and Facade are:
+
 ```php
+// config/app.php
+'providers' => [
+    ...
+    Webafra\LaraSetting\LaraSettingServiceProvider::class,
+],
+
 'aliases' => [
     ...
     'Setting' => Webafra\LaraSetting\Facade\Setting::class,
-]
+],
 ```
 
-**Usage**
-```php
-<?php
-namespace App\Http\Controllers;
+## Publishing Migrations & Models
 
+To publish migrations and models to your project:
+
+```
+# Publish only migrations
+php artisan vendor:publish --tag=migrations
+
+# Publish only models
+php artisan vendor:publish --tag=models
+
+# Publish both migrations and models
+php artisan vendor:publish --tag=all
+```
+
+> Migration files will automatically have timestamps added and duplicates will be skipped if they already exist.
+
+## Usage
+
+```php
 use Webafra\LaraSetting\Facade\Setting;
 
-class SettingController extends Controller {
-    public function index(){
-        #Set a Setting property:
-        Setting::set('key', 'value');
-        
-        #Set a Setting property and Set is_primary:
-        Setting::set('key', 'value', true);
-        
-        #Get a Stored Setting value or pass default value
-        $setting['key'] = Setting::get('key', 'default value');
-    }
-    
-    public function store(\Request $request){
-        #get all settings from an key-value array and store them to database
-        #example: <input type="text" name="setting['title']">
-        Setting::store($request->input('setting'));
-        
-        
-        #get all settings from an key-value and is primary data array and store them to database
-        #example: <input type="text" name="setting['title']">
-        Setting::storePrimary($request->input('setting'));
+// Set a single setting
+Setting::set('site_name', 'My Website');
 
+// Set a setting and mark as primary
+Setting::set('site_name', 'My Website', true);
 
-        # and you want Clear All Cache Data With Artisan command Line :
-        Setting::clean();
-    }
-}
+// Get a setting, with a default value if not set
+$value = Setting::get('site_name', 'Default Site Name');
+
+// Get all primary settings as key-value array
+$primary = Setting::getPrimary();
+
+// Store multiple settings from an array
+Setting::store([
+    'key1' => 'value1',
+    'key2' => 'value2'
+]);
+
+// Store multiple primary settings (arrays are automatically serialized)
+Setting::storePrimary([
+    'main_key' => 'main_value',
+    'options' => ['opt1', 'opt2']
+]);
+
+// Clear all settings cache
+Setting::clean();
 ```
