@@ -42,29 +42,24 @@ php artisan vendor:publish --tag=all
 ```
 
 > Migration files will automatically have timestamps added and duplicates will be skipped if they already exist.
+> Available default groups: Setting::GROUP_SITE, Setting::GROUP_EMAIL, Setting::GROUP_PAYMENT, Setting::GROUP_CUSTOM
 
 ## Usage
 
 ```php
 use Webafra\LaraSetting\Facade\Setting;
 
-// Set a single setting
-Setting::set('site_name', 'My Website');
+// Set a setting in a specific group
+Setting::set('site_name', 'My Website', false, Setting::GROUP_SITE);
 
-// Set a setting and mark as primary
-Setting::set('site_name', 'My Website', true);
-
-// Get a setting, with a default value if not set
-$value = Setting::get('site_name', 'Default Site Name');
-
-// Get all primary settings as key-value array
-$primary = Setting::getPrimary();
-
-// Store multiple settings from an array
+// Store multiple settings in a group
 Setting::store([
     'key1' => 'value1',
     'key2' => 'value2'
-]);
+], Setting::GROUP_CUSTOM);
+
+// Get all settings by group
+$siteSettings = Setting::getByGroup(Setting::GROUP_SITE);
 
 // Store multiple primary settings (arrays are automatically serialized)
 Setting::storePrimary([
