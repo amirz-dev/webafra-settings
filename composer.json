@@ -1,18 +1,37 @@
 {
-    "name": "webafra/larasetting",
-    "description": "Store your custom Settings in database and cache system",
-    "require": {},
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "Mohammad Ali Nasab",
-            "email": "webafra@gmail.com"
-        }
-    ],
-    "autoload": {
-        "psr-4": {
-            "Webafra\\LaraSetting\\": "src/"
-        }
+  "name": "webafra/larasetting",
+  "description": "A Laravel 12 compatible package to store custom settings in database and cache, with auto-discovery and publishable migrations.",
+  "require": {
+    "php": "^8.1",
+    "illuminate/support": "^12.0",
+    "illuminate/database": "^12.0"
+  },
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Mohammad Ali Nasab",
+      "email": "webafra@gmail.com"
     },
-    "minimum-stability": "dev"
+    {
+      "name": "AmirHossein Zebardast",
+      "email": "amirhz.dev@gmail.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Webafra\\LaraSetting\\": "src/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Webafra\\LaraSetting\\LaraSettingServiceProvider"
+      ],
+      "aliases": {
+        "Setting": "Webafra\\LaraSetting\\Facade\\Setting"
+      }
+    }
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
 }
