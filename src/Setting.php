@@ -2,97 +2,125 @@
 
 namespace Webafra\LaraSetting;
 
-use Webafra\LaraSetting\Model\Setting as SettingModel;
+use Webafra\LaraSetting\Models\Setting as SettingModel;
 use Illuminate\Support\Facades\Cache;
 
 class Setting
 {
-
-    public function set($key, $value, $is_primary = false)
+    /**
+     * Set a setting value.
+     *
+     * @param string $key
+     * @param mixed $value
+     * @param bool $is_primary
+     * @param string $group
+     * @return mixed
+     */
+    public function set(string $key, $value, bool $is_primary = false, string $group = SettingModel::GROUP_CUSTOM)
     {
-        if (\Cache::has('setting_' . $key)) {
-            Cache::forget('setting_' . $key);
-        }
+        Cache::forget('setting_' . $key);
+        Cache::forget('setting_group_' . $group);
 
-        $setting = SettingModel::updateOrCreate([
-            'key' => $key
-        ], [
-            'value' => $value,
-            'is_primary' => $is_primary,
-        ]);
+        SettingModel::updateOrCreate(
+            ['key' => $key],
+            ['value' => $value, 'is_primary' => $is_primary, 'group' => $group]
+        );
 
         Cache::forever('setting_' . $key, $value);
 
         return $value;
     }
 
-    public function get($key, $default = null)
+    /**
+     * Get a setting value.
+     *
+     * @param string $key
+     * @param mixed $default
+     * @return mixed
+     */
+    public function get(string $key, $default = null)
     {
-        try {
-            if (Cache::has('setting_' . $key)) {
-                return Cache::get('setting_' . $key);
-            }
-
-            $setting = Cache::rememberForever('setting_' . $key, function () use ($key) {
-                return SettingModel::where('key', $key)->firstOrFail()->value;
-            });
-
-            return $setting;
-
-        } catch (\Exception $e) {
-            return $default;
-        }
+        return Cache::rememberForever('setting_' . $key, function () use ($key, $default) {
+            return SettingModel::where('key', $key)->value('value') ?? $default;
+        });
     }
 
+    /**
+     * Get all primary settings.
+     *
+     * @param mixed $default
+     * @return array|mixed
+     */
     public function getPrimary($default = null)
     {
-        try {
-            if (Cache::has('setting_primary')) {
-                return Cache::get('setting_primary');
-            }
-
-            $settings = Cache::rememberForever('setting_primary', function () {
-                return SettingModel::where('is_primary', true )->pluck('value', 'key')->toArray();
-            });
-
-            return $settings;
-
-        } catch (\Exception $e) {
-            return $default;
-        }
+        return Cache::rememberForever('setting_primary', function () {
+            return SettingModel::where('is_primary', true)->pluck('value', 'key')->toArray();
+        }) ?? $default;
     }
 
-    public function store($setting)
+    /**
+     * Get settings by group.
+     *
+     * @param string $group
+     * @return array
+     */
+    public function getByGroup(string $group): array
+    {
+        return Cache::rememberForever('setting_group_' . $group, function () use ($group) {
+            return SettingModel::where('group', $group)->pluck('value', 'key')->toArray();
+        });
+    }
+
+    /**
+     * Store multiple settings.
+     *
+     * @param array $settings
+     * @param string $group
+     * @return int
+     */
+    public function store(array $settings, string $group = SettingModel::GROUP_CUSTOM): int
     {
         $i = 0;
-        foreach($setting as $key => $value) {
-            $this->set($key, $value);
+        foreach ($settings as $key => $value) {
+            $this->set($key, $value, false, $group);
             $i++;
         }
         return $i;
     }
 
-    public function storePrimary($setting)
+    /**
+     * Store multiple primary settings.
+     *
+     * @param array $settings
+     * @param string $group
+     * @return int
+     */
+    public function storePrimary(array $settings, string $group = SettingModel::GROUP_CUSTOM): int
     {
         $i = 0;
-        foreach($setting as $key => $value) {
-            if (gettype($value) == 'array')
-            {
-                $value = serialize($value);
+        foreach ($settings as $key => $value) {
+            if (is_array($value)) {
+                $value = json_encode($value, JSON_THROW_ON_ERROR);
             }
-            $this->set($key, $value, true);
+            $this->set($key, $value, true, $group);
             $i++;
         }
         return $i;
     }
 
-
-    public function clean()
+    /**
+     * Clear all cache for settings.
+     */
+    public function clean(): void
     {
-        \Artisan::call('cache:clear');
-        // Cache::forget('setting_primary');
+        Cache::forget('setting_primary');
+
+        foreach (SettingModel::pluck('key') as $key) {
+            Cache::forget('setting_' . $key);
+        }
+
+        foreach (SettingModel::distinct()->pluck('group') as $group) {
+            Cache::forget('setting_group_' . $group);
+        }
     }
-
-
-
 }
