@@ -13,6 +13,7 @@ class Setting extends Model
         'key',
         'value',
         'is_primary',
+        'group'
     ];
 
     protected function casts(): array

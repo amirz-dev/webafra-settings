@@ -78,6 +78,9 @@ class Setting
         return $i;
     }
 
+    /**
+     * Clear all cache for settings.
+     */
     public function clean(): void
     {
         Cache::forget('setting_primary');
@@ -87,6 +90,10 @@ class Setting
         foreach ($settings as $setting) {
             Cache::forget($this->cacheKey($setting->group, $setting->key));
             Cache::forget('setting_group_' . $setting->group);
+        }
+
+        foreach (SettingModel::distinct()->pluck('group') as $group) {
+            Cache::forget('setting_group_' . $group);
         }
     }
 
