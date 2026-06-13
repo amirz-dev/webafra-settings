@@ -122,6 +122,134 @@ All values are cached indefinitely via `Cache::forever`. To invalidate all cache
 Setting::clean();
 ```
 
+## API Reference
+
+### `Setting::set()`
+
+```php
+Setting::set(string $key, mixed $value, bool $is_primary = false, string $group = 'general'): mixed
+```
+
+Stores or updates a setting. Arrays are automatically JSON-encoded. Returns the stored value.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `$key` | `string` | — | Setting key |
+| `$value` | `mixed` | — | Value to store (arrays are JSON-encoded automatically) |
+| `$is_primary` | `bool` | `false` | Mark as a primary setting |
+| `$group` | `string` | `'general'` | Group namespace |
+
+---
+
+### `Setting::get()`
+
+```php
+Setting::get(string $key, mixed $default = null, string $group = 'general'): mixed
+```
+
+Retrieves a setting value. Result is cached indefinitely.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `$key` | `string` | — | Setting key |
+| `$default` | `mixed` | `null` | Fallback value if key does not exist |
+| `$group` | `string` | `'general'` | Group namespace |
+
+---
+
+### `Setting::has()`
+
+```php
+Setting::has(string $key, string $group = 'general'): bool
+```
+
+Returns `true` if the setting exists in the database (does not hit cache).
+
+---
+
+### `Setting::delete()`
+
+```php
+Setting::delete(string $key, string $group = 'general'): bool
+```
+
+Deletes a setting from the database and clears its cache entry. Returns `true` on success.
+
+---
+
+### `Setting::store()`
+
+```php
+Setting::store(array $settings, string $group = 'general'): int
+```
+
+Stores multiple settings at once. Returns the number of settings saved.
+
+```php
+Setting::store([
+    'key1' => 'value1',
+    'key2' => ['a', 'b'],  // arrays are auto JSON-encoded
+], 'my_group');
+```
+
+---
+
+### `Setting::storePrimary()`
+
+```php
+Setting::storePrimary(array $settings, string $group = 'general'): int
+```
+
+Same as `store()` but marks every entry as primary (`is_primary = true`). Returns the number of settings saved.
+
+---
+
+### `Setting::getPrimary()`
+
+```php
+Setting::getPrimary(mixed $default = null): mixed
+```
+
+Returns all primary settings across all groups as a flat `['key' => 'value']` array. Result is cached indefinitely.
+
+---
+
+### `Setting::getGroup()`
+
+```php
+Setting::getGroup(string $group): array
+```
+
+Returns all settings within a group as a `['key' => 'value']` array. Result is cached indefinitely.
+
+---
+
+### `Setting::clean()`
+
+```php
+Setting::clean(): void
+```
+
+Clears the cache for every setting, every group, and the primary collection. Does not delete database records.
+
+---
+
+### Quick reference
+
+| Method | DB read | DB write | Cache read | Cache write | Returns |
+|--------|:-------:|:--------:|:----------:|:-----------:|---------|
+| `set()` | — | ✓ | — | ✓ | `mixed` |
+| `get()` | on miss | — | ✓ | on miss | `mixed` |
+| `has()` | ✓ | — | — | — | `bool` |
+| `delete()` | — | ✓ | — | clears | `bool` |
+| `store()` | — | ✓ | — | ✓ | `int` |
+| `storePrimary()` | — | ✓ | — | ✓ | `int` |
+| `getPrimary()` | on miss | — | ✓ | on miss | `array` |
+| `getGroup()` | on miss | — | ✓ | on miss | `array` |
+| `clean()` | — | — | — | clears all | `void` |
+
+---
+
 ## Upgrading from v1.x
 
 Version 2.0 introduced a `group` column and a composite unique key on `(group, key)`. After upgrading the package, publish and run a new migration:
