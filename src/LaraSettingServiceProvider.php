@@ -7,13 +7,10 @@ use Webafra\LaraSetting\Setting as SettingService;
 
 class LaraSettingServiceProvider extends ServiceProvider
 {
-    /**
-     * Bootstrap the application services.
-     */
     public function boot(): void
     {
         $this->publishes([
-            __DIR__ . '/Database/Migrations/create_settings_table.php.stub' => database_path('migrations/' . date('Y_m_d_His') . '_create_settings_table.php')
+            __DIR__ . '/Database/Migrations/create_settings_table.php.stub' => database_path('migrations/' . date('Y_m_d_His') . '_create_settings_table.php'),
         ], 'migrations');
 
         $this->publishes([
@@ -26,9 +23,6 @@ class LaraSettingServiceProvider extends ServiceProvider
         ], 'all');
     }
 
-    /**
-     * Register the application services.
-     */
     public function register(): void
     {
         $this->app->singleton('webafra-settings', function ($app) {

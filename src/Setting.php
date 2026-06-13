@@ -7,78 +7,58 @@ use Illuminate\Support\Facades\Cache;
 
 class Setting
 {
-    /**
-     * Set a setting value.
-     *
-     * @param string $key
-     * @param mixed $value
-     * @param bool $is_primary
-     * @param string $group
-     * @return mixed
-     */
-    public function set(string $key, $value, bool $is_primary = false, string $group = SettingModel::GROUP_CUSTOM)
+    public function set(string $key, mixed $value, bool $is_primary = false, string $group = 'general'): mixed
     {
-        Cache::forget('setting_' . $key);
-        Cache::forget('setting_group_' . $group);
+        if (is_array($value)) {
+            $value = json_encode($value, JSON_THROW_ON_ERROR);
+        }
+
+        Cache::forget($this->cacheKey($group, $key));
 
         SettingModel::updateOrCreate(
-            ['key' => $key],
-            ['value' => $value, 'is_primary' => $is_primary, 'group' => $group]
+            ['group' => $group, 'key' => $key],
+            ['value' => $value, 'is_primary' => $is_primary]
         );
 
-        Cache::forever('setting_' . $key, $value);
+        Cache::forever($this->cacheKey($group, $key), $value);
 
         return $value;
     }
 
-    /**
-     * Get a setting value.
-     *
-     * @param string $key
-     * @param mixed $default
-     * @return mixed
-     */
-    public function get(string $key, $default = null)
+    public function get(string $key, mixed $default = null, string $group = 'general'): mixed
     {
-        return Cache::rememberForever('setting_' . $key, function () use ($key, $default) {
-            return SettingModel::where('key', $key)->value('value') ?? $default;
+        return Cache::rememberForever($this->cacheKey($group, $key), function () use ($key, $default, $group) {
+            return SettingModel::where('group', $group)->where('key', $key)->value('value') ?? $default;
         });
     }
 
-    /**
-     * Get all primary settings.
-     *
-     * @param mixed $default
-     * @return array|mixed
-     */
-    public function getPrimary($default = null)
+    public function has(string $key, string $group = 'general'): bool
+    {
+        return SettingModel::where('group', $group)->where('key', $key)->exists();
+    }
+
+    public function delete(string $key, string $group = 'general'): bool
+    {
+        Cache::forget($this->cacheKey($group, $key));
+
+        return (bool) SettingModel::where('group', $group)->where('key', $key)->delete();
+    }
+
+    public function getPrimary(mixed $default = null): mixed
     {
         return Cache::rememberForever('setting_primary', function () {
             return SettingModel::where('is_primary', true)->pluck('value', 'key')->toArray();
         }) ?? $default;
     }
 
-    /**
-     * Get settings by group.
-     *
-     * @param string $group
-     * @return array
-     */
-    public function getByGroup(string $group): array
+    public function getGroup(string $group): array
     {
         return Cache::rememberForever('setting_group_' . $group, function () use ($group) {
             return SettingModel::where('group', $group)->pluck('value', 'key')->toArray();
         });
     }
 
-    /**
-     * Store multiple settings.
-     *
-     * @param array $settings
-     * @param string $group
-     * @return int
-     */
-    public function store(array $settings, string $group = SettingModel::GROUP_CUSTOM): int
+    public function store(array $settings, string $group = 'general'): int
     {
         $i = 0;
         foreach ($settings as $key => $value) {
@@ -88,20 +68,10 @@ class Setting
         return $i;
     }
 
-    /**
-     * Store multiple primary settings.
-     *
-     * @param array $settings
-     * @param string $group
-     * @return int
-     */
-    public function storePrimary(array $settings, string $group = SettingModel::GROUP_CUSTOM): int
+    public function storePrimary(array $settings, string $group = 'general'): int
     {
         $i = 0;
         foreach ($settings as $key => $value) {
-            if (is_array($value)) {
-                $value = json_encode($value, JSON_THROW_ON_ERROR);
-            }
             $this->set($key, $value, true, $group);
             $i++;
         }
@@ -115,12 +85,20 @@ class Setting
     {
         Cache::forget('setting_primary');
 
-        foreach (SettingModel::pluck('key') as $key) {
-            Cache::forget('setting_' . $key);
+        $settings = SettingModel::select('group', 'key')->get();
+
+        foreach ($settings as $setting) {
+            Cache::forget($this->cacheKey($setting->group, $setting->key));
+            Cache::forget('setting_group_' . $setting->group);
         }
 
         foreach (SettingModel::distinct()->pluck('group') as $group) {
             Cache::forget('setting_group_' . $group);
         }
+    }
+
+    private function cacheKey(string $group, string $key): string
+    {
+        return 'setting_' . $group . '_' . $key;
     }
 }
