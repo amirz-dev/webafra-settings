@@ -12,7 +12,7 @@ A Laravel 12/13 compatible package to store custom settings in the database and 
 ## Installation
 
 ```bash
-composer require webafra/larasetting
+composer require webafra/larasettings
 ```
 
 > **Note:** Since this package supports **Laravel auto-discovery**, you do not need to manually register the ServiceProvider or Facade.
